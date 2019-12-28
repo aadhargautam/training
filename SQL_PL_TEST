@@ -1,0 +1,96 @@
+--Q1)
+Select last_name, trunc(MONTHS_BETWEEN(SYSDATE,hire_date)/12) AS "Years", MOD(trunc(MONTHS_BETWEEN(SYSDATE,hire_date)),12) AS "Months"
+From Employees 
+ORDER BY trunc(MONTHS_BETWEEN(SYSDATE,hire_date)/12) DESC;
+
+--Q2)
+Select d.department_id, d.department_name, d.location_id, count(e.employee_id) 
+From departments d, employees e Where d.department_id  = e.department_id(+)
+GROUP BY d.department_id, d.department_name, d.location_id;
+
+--Q3)
+Select employee_id, last_name, hire_date From Employees Where TO_NUMBER(TO_CHAR(hire_date, 'DD')) < 16;
+
+--Q4)
+Select employee_id, last_name, salary, trunc(salary/1000) "THOUSANDS" From Employees;
+
+--Q5)
+Select employee_id, last_name, salary From Employees Where Salary > (Select MIN(salary) From Employees Where department_id=60);
+
+--Q6)
+SET SERVEROUTPUT ON;
+DECLARE
+v_deptno employees.department_id%TYPE := &deptno;
+v_count NUMBER;
+BEGIN
+Select count(*) INTO v_count From Employees Where department_id = v_deptno;
+DBMS_OUTPUT.PUT_LINE(v_count||' employee(s) work for department number '||v_deptno);
+END;
+/
+
+--Q7)
+SET SERVEROUTPUT ON;
+DECLARE
+v_year NUMBER := &enteryear;
+BEGIN
+IF (MOD(v_year, 4) = 0 AND MOD(v_year, 100) <>0) OR MOD(v_year, 400) = 0 THEN
+DBMS_OUTPUT.PUT_LINE(v_year||' is a leap year.');
+ELSE
+DBMS_OUTPUT.PUT_LINE(v_year||' is not a leap year.');
+END IF;
+END;
+/
+
+--Q8)
+SET SERVEROUTPUT ON;
+DECLARE
+v_mon_sal NUMBER := &monthly_salary;
+v_ann_sal NUMBER;
+v_bonus NUMBER;
+BEGIN
+v_ann_sal := v_mon_sal*12;
+IF v_ann_sal <= 9999 THEN
+  v_bonus:= 1000;
+ELSIF (v_ann_sal >= 10000) AND (v_ann_sal <=19999) THEN
+  v_bonus:=1500;
+ELSE 
+  v_bonus:=2000;
+END IF;
+DBMS_OUTPUT.PUT_LINE('The bonus is $ '||v_bonus);
+END;
+/
+
+--Q9)
+SET SERVEROUTPUT ON;
+DECLARE
+CURSOR emp_cur IS
+Select last_name, Salary, hire_date From Employees;
+BEGIN
+FOR emp_record IN emp_cur
+LOOP
+  IF (emp_record.salary > 15000) AND (emp_record.hire_date > '01-FEB-1988') THEN
+    DBMS_OUTPUT.PUT_LINE(emp_record.last_name||' earns '||emp_record.salary||' and joined the organization on '||emp_record.hire_date);
+  END IF;
+END LOOP;  
+END;
+/
+
+--Q10)
+SET SERVEROUTPUT ON;
+DECLARE
+v_emp_lname employees.last_name%TYPE := &lastname;
+v_emp_sal employees.salary%TYPE;
+v_emp_date  employees.hire_date%TYPE;
+e_sal_raise EXCEPTION;
+BEGIN
+Select last_name, salary, hire_date INTO v_emp_lname, v_emp_sal, v_emp_date From Employees Where last_name=v_emp_lname;
+IF round(months_between(SYSDATE, v_emp_date)/12) > 5 AND v_emp_sal < 3500 THEN
+  Raise e_sal_raise;
+ELSE
+  DBMS_OUTPUT.PUT_LINE(v_emp_lname||' is not due for a raise.' );
+END IF;  
+EXCEPTION
+WHEN e_sal_raise THEN 
+  DBMS_OUTPUT.PUT_LINE(v_emp_lname||' is due for a raise.' );
+END;
+/
